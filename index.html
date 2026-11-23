@@ -43,6 +43,9 @@ h2{margin:.2em 0 .4em}li{margin:3px 0}.ok{color:#6be59b}
 .vi{position:absolute;bottom:9%;left:12%;right:12%;max-height:6.5em;overflow:hidden;background:rgba(0,0,0,.45);border-radius:8px;padding:3px;font-size:11px}
 .vm:empty,.vi:empty{display:none}
 .vr.nogyro #tc{display:block!important}
+#mic{position:fixed;inset:0;z-index:6;display:none;align-items:center;justify-content:center;flex-direction:column;background:rgba(0,0,0,.78);color:#fff}
+#mc{width:min(76vmin,360px);height:min(76vmin,360px);border-radius:50%;border:8px solid #111;box-shadow:inset 0 0 40px #000}
+@media(max-width:700px){.card{padding:14px 16px}h2{font-size:18px}#info{font-size:12px}}
 #vx{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:9;display:none;padding:10px 16px;font-size:14px}.vr #vx{display:block}
 .vsep{position:fixed;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;background:#000;z-index:8;display:none}.vr .vsep{display:block}
 </style></head><body>
@@ -50,6 +53,7 @@ h2{margin:.2em 0 .4em}li{margin:3px 0}.ok{color:#6be59b}
 <div class="hud" id="info"></div><div class="hud" id="msg"></div><div class="hud" id="mis"></div>
 <div class="hud" id="ppe"><span id="p1">1 Jaleco</span><span id="p2">2 Luvas</span><span id="p3">3 Óculos</span></div>
 <div class="hud" id="keys">WASD mover · Shift correr · Mouse olhar (botão direito se o cursor não travar) · E pegar/soltar · segurar clique esquerdo: despejar · Roda: distância · F usar · P pHmetro · T termômetro · N caderno/missões</div>
+<div id="mic"><canvas id="mc" width="320" height="320"></canvas><p id="mt"></p></div>
 <div id="vr"><div class="ve" id="v1"><i class="vc"></i><div class="vt"></div><div class="vm"></div><div class="vi"></div></div><div class="ve" id="v2"><i class="vc"></i><div class="vt"></div><div class="vm"></div><div class="vi"></div></div></div><div class="vsep"></div><button id="vx">✕ Sair do VR</button>
 <div id="tc"><div id="lp"></div><div id="js"><div id="jk"></div></div><div id="tb"><button class="tbn" data-d="-1">－</button><button class="tbn" id="pour">💧</button><button class="tbn" data-d="1">＋</button><button class="tbn" data-k="KeyP">pH</button><button class="tbn" data-k="KeyT">°C</button><button class="tbn" data-k="KeyN">📓</button><button class="tbn" data-k="KeyE">Pegar</button><button class="tbn" data-k="KeyF">Usar</button><button class="tbn" id="vrb">🥽</button></div></div>
 <div id="start"><div class="card"><h2>⚗️ Laboratório de Química 3D</h2>
@@ -62,7 +66,7 @@ h2{margin:.2em 0 .4em}li{margin:3px 0}.ok{color:#6be59b}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const T=THREE,$=i=>document.getElementById(i);
-const R=new T.WebGLRenderer({antialias:true});R.setPixelRatio(Math.min(devicePixelRatio,2));R.shadowMap.enabled=true;R.shadowMap.type=T.PCFSoftShadowMap;R.outputEncoding=T.sRGBEncoding;
+const R=new T.WebGLRenderer({antialias:true});R.setPixelRatio(Math.min(devicePixelRatio,2));R.shadowMap.enabled=true;R.shadowMap.type=T.PCFSoftShadowMap;R.outputEncoding=T.sRGBEncoding;R.toneMapping=T.ACESFilmicToneMapping;R.toneMappingExposure=1.1;
 document.body.prepend(R.domElement);
 const S=new T.Scene();S.background=new T.Color(0xcfd8e0);
 const C=new T.PerspectiveCamera(70,1,.05,60);C.rotation.order='YXZ';C.position.set(0,1.65,3);S.add(C);
@@ -78,9 +82,10 @@ const fl=new T.Mesh(new T.PlaneGeometry(16,12),M(0xffffff,.35,.1,{map:floorT}));
 const WM=M(0xe9eef2,.9);
 bx(16,3.5,.2,WM,0,1.75,-6.1);bx(16,3.5,.2,WM,0,1.75,6.1);bx(.2,3.5,12,WM,-8.1,1.75,0);bx(.2,3.5,12,WM,8.1,1.75,0);bx(16,.2,12,M(0xf4f6f8),0,3.55,0);
 for(let i=0;i<6;i++)bx(1.6,.05,.5,new T.MeshBasicMaterial({color:0xffffff}),-5+i*2,3.43,i%2?-2:2,S,false);
-S.add(new T.HemisphereLight(0xffffff,0x8899aa,.85));
-const dl=new T.DirectionalLight(0xffffff,.65);dl.position.set(3,9,4);dl.castShadow=true;dl.shadow.mapSize.set(2048,2048);Object.assign(dl.shadow.camera,{left:-9,right:9,top:7,bottom:-7,near:1,far:20});S.add(dl);
-const pl=new T.PointLight(0xfff4e0,.5,14);pl.position.set(0,3.2,0);S.add(pl);
+S.add(new T.HemisphereLight(0xffffff,0x8899aa,.4));
+const dl=new T.DirectionalLight(0xffffff,.45);dl.position.set(3,9,4);dl.castShadow=true;dl.shadow.bias=-.0004;dl.shadow.normalBias=.03;dl.shadow.mapSize.set(2048,2048);Object.assign(dl.shadow.camera,{left:-9,right:9,top:7,bottom:-7,near:1,far:20});S.add(dl);
+const SPT=[];{const sp=(x,z,tx,tz)=>{const s=new T.SpotLight(0xfff1dc,1.4,12,1.05,.65,1);s.position.set(x,3.4,z);s.target.position.set(tx,.9,tz);s.castShadow=true;s.shadow.mapSize.set(1024,1024);s.shadow.bias=-.0004;s.shadow.normalBias=.02;S.add(s,s.target);SPT.push(s)};sp(1.5,.5,1.5,0);sp(-1.8,-3.8,-1.8,-5.3);sp(-6,1,-7.5,0)}
+try{const es=new T.Scene();es.add(new T.Mesh(new T.BoxGeometry(30,12,24),new T.MeshBasicMaterial({color:0x7d8790,side:T.BackSide})));[[-6,0],[0,0],[6,0],[-6,-6],[6,6]].forEach(([x,z])=>{const p=new T.Mesh(new T.PlaneGeometry(4,1.6),new T.MeshBasicMaterial({color:new T.Color(4,4,4)}));p.position.set(x,5.8,z);p.rotation.x=Math.PI/2;es.add(p)});S.environment=new T.PMREMGenerator(R).fromScene(es,.03).texture}catch(e){}
 const GR=ctex(256,256,(g,w,h)=>{g.fillStyle='#2b2f33';g.fillRect(0,0,w,h);for(let i=0;i<2500;i++){g.fillStyle=`rgba(${150+Math.random()*100|0},${150+Math.random()*100|0},${150+Math.random()*100|0},.18)`;g.fillRect(Math.random()*w,Math.random()*h,2,2)}},3,1);
 const GM_=M(0xffffff,.25,.1,{map:GR}),CAB=M(0xdfe4e8,.6);
 function bench(cx,cz,w,d){bx(w,.85,d,CAB,cx,.425,cz);bx(w+.1,.05,d+.1,GM_,cx,.875,cz,S,true);BOX.push([cx-w/2,cx+w/2,cz-d/2,cz+d/2])}
@@ -130,7 +135,7 @@ function col(s){let c=[.75,.9,1],a=.45;const V=Math.max(s.vol,1),p=pH(s);
 if(s.ind&2&&p!=null){c=cabC(p);a=.7}else if(s.ind&1&&p>8.3){c=[1,.15,.55];a=.7}
 if(s.cu>0){const t=Math.min(1,s.cu/V*12);c=mix(c,[.15,.45,1],t);a=Math.max(a,.45+.3*t)}
 if(s.mn>0){const t=Math.min(1,s.mn/V*100);c=mix(c,[.5,.02,.6],t);a=Math.max(a,.5+.4*t)}
-if(s.cpp>0){c=mix(c,[.55,.7,.95],Math.min(.6,s.cpp/V*20));a=Math.max(a,.65)}
+if(s.cpp>0&&!s.sep){c=mix(c,[.55,.7,.95],Math.min(.6,s.cpp/V*20));a=Math.max(a,.65)}
 if(s.glu>0)a+=.05;return[...c,Math.min(.92,a)]}
 const STK=[
 {n:'Água destilada',f:'H₂O',Mm:18.02,st:'Líquido',c:'—',p:'Incolor, pH 7. Solvente universal.',s:'Sem riscos relevantes.',col:0x3aa8e0,add:(s,d)=>{s.wat+=d}},
@@ -145,26 +150,26 @@ const STK=[
 {n:'Fenolftaleína',f:'C₂₀H₁₄O₄',Mm:318.3,st:'Líquido',c:'1% em etanol',p:'Incolor em pH < 8,2; rosa em pH > 8,2.',s:'Inflamável (etanol).',col:0xd35400,rate:2,add:(s,d)=>{s.ind|=1}},
 {n:'Etanol',f:'C₂H₅OH',Mm:46.07,st:'Líquido',c:'96%',p:'Miscível em água, volátil.',s:'Inflamável: sem chamas.',col:0xf1c40f,add:(s,d)=>{s.et+=d}},
 {n:'Glicose',f:'C₆H₁₂O₆',Mm:180.16,st:'Sólido',c:'puro',p:'Muito solúvel (≈900 g/L); deixa a solução viscosa.',s:'Sem riscos relevantes.',col:0xbdc3c7,solid:1,add:(s,d)=>{s.glu+=d}}];
-const GL=M(0xffffff,.05,.1,{transparent:true,opacity:.25,side:T.DoubleSide});
+const GL=new T.MeshPhysicalMaterial({color:0xffffff,roughness:.03,metalness:0,transparent:true,opacity:.22,side:T.DoubleSide,envMapIntensity:1.8,clearcoat:1,clearcoatRoughness:.02,depthWrite:false});
 function mkBottle(sp,x,y,z){const g=new T.Group(),w=sp.solid?.045:.035,h=sp.solid?.1:.13;g.userData={kind:'bottle',sp,w,h};
 const lb=ctex(128,128,(c,W,H)=>{c.fillStyle='#f4f4f0';c.fillRect(0,0,W,H);c.fillStyle='#'+sp.col.toString(16).padStart(6,'0');c.fillRect(0,0,W,26);c.fillStyle='#111';c.textAlign='center';c.font='bold 13px sans-serif';const ws=sp.n.split(' ');c.fillText(ws[0],64,50);c.fillText(ws.slice(1).join(' ').slice(0,16),64,66);c.font='bold 24px sans-serif';c.fillText(sp.f.length>8?sp.f.slice(0,8):sp.f,64,108)});
 const b=cy(w,h,M(sp.col,.3,0,{transparent:true,opacity:.8}),0,h/2,0,g);b.castShadow=true;
 const l=new T.Mesh(new T.CylinderGeometry(w+.001,w+.001,h*.55,20,1,true),new T.MeshBasicMaterial({map:lb}));l.position.y=h*.45;g.add(l);
 cy(w*.55,.03,M(0x111111),0,h+.015,0,g);g.position.set(x,y,z);S.add(g);inter.push(g);mov.push(g);return g}
 STK.forEach((sp,i)=>mkBottle(sp,7.75,i<6?1.32:1.82,-3+((i%6)*1.2)+(i<6?0:.3)));
-const TY={beaker:{n:'Béquer 250 mL',cap:250,rt:.045,rb:.045,ri:.043,h:.11,bar:1,tare:100},bec2:{n:'Béquer 600 mL',cap:600,rt:.065,rb:.065,ri:.063,h:.15,bar:1,tare:200},erl:{n:'Erlenmeyer 250 mL',cap:250,rt:.018,rb:.06,ri:.045,h:.13,bar:1,tare:90},prov:{n:'Proveta graduada 100 mL',cap:100,rt:.018,rb:.018,ri:.016,h:.22,tare:150},tub:{n:'Tubo de ensaio 20 mL',cap:20,rt:.011,rb:.011,ri:.01,h:.12,tare:15}};
+const TY={balao:{n:'Balão volumétrico 100 mL',cap:100,rt:.01,rb:.045,ri:.033,h:.17,lh:.075,tare:60,lathe:BAL()},pip:{n:'Pipeta 10 mL',cap:10,rt:.004,rb:.004,ri:.003,h:.3,tare:20},beaker:{n:'Béquer 250 mL',cap:250,rt:.045,rb:.045,ri:.043,h:.11,bar:1,tare:100},bec2:{n:'Béquer 600 mL',cap:600,rt:.065,rb:.065,ri:.063,h:.15,bar:1,tare:200},erl:{n:'Erlenmeyer 250 mL',cap:250,rt:.018,rb:.06,ri:.045,h:.13,bar:1,tare:90},prov:{n:'Proveta graduada 100 mL',cap:100,rt:.018,rb:.018,ri:.016,h:.22,tare:150},tub:{n:'Tubo de ensaio 20 mL',cap:20,rt:.011,rb:.011,ri:.01,h:.12,tare:15}};
 function mkCont(k,x,y,z){const t=TY[k],g=new T.Group();t.k=k;g.userData={kind:'cont',ty:t,st:ns(),top:.005};
-const gm=new T.Mesh(new T.CylinderGeometry(t.rt,t.rb,t.h,24,1,true),GL);gm.position.y=t.h/2;g.add(gm);
+const gm=new T.Mesh(t.lathe?new T.LatheGeometry(t.lathe,24):new T.CylinderGeometry(t.rt,t.rb,t.h,24,1,true),GL);gm.position.y=t.lathe?0:t.h/2;gm.castShadow=true;g.add(gm);
 const bt=new T.Mesh(new T.CylinderGeometry(t.rb,t.rb,.004,24),GL);bt.position.y=.002;g.add(bt);
-const lq=new T.Mesh(new T.CylinderGeometry(1,1,1,20),new T.MeshStandardMaterial({transparent:true,opacity:.7,roughness:.1}));g.add(lq);
+const lq=new T.Mesh(new T.CylinderGeometry(1,1,1,20),new T.MeshStandardMaterial({transparent:true,opacity:.7,roughness:.1}));lq.castShadow=true;g.add(lq);
 const sd=new T.Mesh(new T.CylinderGeometry(1,1,1,16),M(0xffffff,1));g.add(sd);let bar=null;
 if(t.bar){bar=new T.Mesh(new T.BoxGeometry(.03,.006,.006),M(0xffffff));bar.position.y=.008;g.add(bar)}
 Object.assign(g.userData,{lq,sd,bar});g.position.set(x,y,z);S.add(g);conts.push(g);inter.push(g);mov.push(g);return g}
 [['beaker',-.2],['beaker',.2],['bec2',.7],['erl',1.2],['erl',1.6],['prov',2],['prov',2.3],['tub',2.6],['tub',2.75],['tub',2.9]].forEach(([k,x])=>mkCont(k,x,.9,-5.3));
 mkCont('beaker',4.8,.77,-5.6);mkCont('beaker',5.2,.77,-5.6);mkCont('erl',5.6,.77,-5.6);mkCont('bec2',4.9,.07,-5.6);mkCont('prov',5.5,1.42,-5.6);mkCont('tub',5.0,1.42,-5.6);
 function viz(g){const u=g.userData,s=u.st,t=u.ty,on=s.vol>.05;u.lq.visible=on;
-if(on){const h=Math.max(.002,Math.min(1,s.vol/t.cap)*t.h*.92);u.lq.scale.set(t.ri,h,t.ri);u.lq.position.y=h/2+.005;const c=col(s);u.lq.material.color.setRGB(c[0],c[1],c[2]);u.lq.material.opacity=c[3];u.top=h+.005}else u.top=.005;
-const sg=sedOf(s);u.sd.visible=sg.g>.02;if(sg.g>.02){const hh=Math.min(.03,.002+sg.g*.0012);u.sd.scale.set(t.ri*.95,hh,t.ri*.95);u.sd.position.y=hh/2+.004;u.sd.material.color.setHex(sg.c)}}
+if(on){const h=Math.max(.002,Math.min(1,s.vol/t.cap)*(t.lh||t.h*.92));u.lq.scale.set(t.ri,h,t.ri);u.lq.position.y=h/2+.005;const c=col(s);u.lq.material.color.setRGB(c[0],c[1],c[2]);u.lq.material.opacity=c[3];u.top=h+.005}else u.top=.005;
+const sg=sedOf(s);u.sd.visible=sg.g>.02;if(sg.g>.02){const hh=Math.min(.03,.002+sg.g*.0012)*(s.sep?.55:1);u.sd.scale.set(t.ri*.95,hh,t.ri*.95);u.sd.position.y=hh/2+.004;u.sd.material.color.setHex(sg.c)}}
 // ---- equipamentos
 function screen(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;const t=new T.CanvasTexture(c);t.encoding=T.sRGBEncoding;return{c,x:c.getContext('2d'),t,draw(txt,col='#7dffa0',sz=36){this.x.fillStyle='#04120a';this.x.fillRect(0,0,w,h);this.x.fillStyle=col;this.x.font='bold '+sz+'px monospace';this.x.textAlign='center';this.x.fillText(txt,w/2,h*.65);this.t.needsUpdate=true}}}
 const EQ={};
@@ -178,6 +183,55 @@ function equip(id,n,h,x,z){const g=new T.Group();g.userData={kind:'equip',id,n,h
  const tp=new T.Mesh(new T.CylinderGeometry(.1,.1,.012,24),M(0xb8c0c8,.3,.9));tp.position.set(1.9,.9+.055,-.02);S.add(tp);surf.push(tp)}
 {const g=equip('ph','pHmetro','Mire para um recipiente e pressione P para medir o pH.',2.7,.1);bx(.18,.14,.1,M(0xf0f0f0,.4),0,.07,0,g);const sc=screen(160,64);sc.draw('pH --');g.userData.sc=sc;const sm=new T.Mesh(new T.PlaneGeometry(.14,.06),new T.MeshBasicMaterial({map:sc.t}));sm.position.set(0,.09,.052);g.add(sm);cy(.004,.18,M(0x888888),.12,.09,0,g)}
 {const g=new T.Group();g.userData={kind:'pc',n:'Computador do laboratório',h:'F: missões, modo livre/carreira e caderno.'};g.position.set(-.8,.9,-5.3);S.add(g);inter.push(g);bx(.5,.32,.03,M(0x111111),0,.3,0,g);bx(.05,.14,.05,M(0x111111),0,.07,0,g);bx(.3,.01,.12,M(0x222222),0,.005,.2,g);const sc=screen(256,160);sc.draw('MISSÕES',' #7dd3ff',34);const sm=new T.Mesh(new T.PlaneGeometry(.46,.28),new T.MeshBasicMaterial({map:sc.t}));sm.position.set(0,.3,.017);g.add(sm)}
+// ---- equipamentos extras
+const near=(c,x,z,r,y,t=.05)=>!c.userData.goal&&c!==held&&Math.hypot(c.position.x-x,c.position.z-z)<r&&Math.abs(c.position.y-y)<t;
+const hid=(p,x,y,z,r,h,sf)=>{const m=new T.Mesh(new T.CylinderGeometry(r,r,h,10),new T.MeshBasicMaterial({visible:false}));m.position.set(x,y,z);p.add(m);if(sf)surf.push(m);return m};
+const ST_M=M(0x9aa4ad,.3,.9),GLM=M(0xcfe8f5,.1,0,{transparent:true,opacity:.35}),LED=new T.MeshBasicMaterial({color:0x330808});
+let EVF=1,EVD=0,ROT,fa=0,fc=0,mvx=0,mvz=0,bob=0;const HT=[],BUN={};
+function BAL(){const p=[];for(let i=0;i<=14;i++){const a=i/14*2.55;p.push(new T.Vector2(Math.sin(a)*.045,.045-Math.cos(a)*.045))}p.push(new T.Vector2(.01,.12),new T.Vector2(.01,.17));return p}
+function perf(dt){fa+=dt;fc++;if(fa<1.2)return;const ms=fa/fc*1000;fa=0;fc=0;const pr=R.getPixelRatio(),mx=VR?1:Math.min(devicePixelRatio,2);
+if(ms>24&&pr>.6){R.setPixelRatio(Math.max(.6,pr-.2));rs()}else if(ms>28&&pr<=.6){SPT.forEach(s=>s.castShadow=false)}else if(ms<13&&pr<mx-.05){R.setPixelRatio(Math.min(pr+.1,mx));rs()}}
+// Bico de Bunsen + tripé
+{const g=equip('bun','Bico de Bunsen','F acende/apaga. Coloque o recipiente sobre o tripé.',3.1,-5.3),u=g.userData;u.tog=1;
+cy(.05,.012,ST_M,0,.006,0,g);cy(.012,.13,ST_M,0,.075,0,g);for(let i=0;i<3;i++){const a=i*2.09;cy(.003,.17,ST_M,Math.cos(a)*.06,.085,Math.sin(a)*.06,g)}
+cy(.07,.006,ST_M,0,.17,0,g);hid(g,0,.178,0,.07,.01,1);hid(g,0,.07,0,.03,.14);
+const f=new T.Mesh(new T.ConeGeometry(.02,.07,10),new T.MeshBasicMaterial({color:0x66aaff,transparent:true,opacity:.8}));f.position.y=.17;f.visible=false;g.add(f);
+const l=new T.PointLight(0xff8a30,0,1.8);l.position.set(3.1,1.07,-5.3);S.add(l);BUN.f=f;BUN.l=l;HT.push(c=>u.on&&near(c,3.1,-5.3,.08,1.07)?400:0)}
+// Centrífuga
+{const g=equip('cen','Centrífuga','F gira por 6 s. Tubos sobre o rotor; compacta precipitados.',-7.5,-1.6);cy(.17,.12,M(0xdfe3e6,.4,.2),0,.06,0,g);ROT=cy(.12,.01,M(0x555b61,.4,.8),0,.125,0,g);for(let i=0;i<4;i++)cy(.012,.012,M(0x222222),Math.cos(i*1.57)*.09,.01,Math.sin(i*1.57)*.09,ROT);hid(g,0,.13,0,.12,.01,1);g.userData.t=0;g.userData.fn=u=>{if(u.t>0)return;u.t=6;msg('Centrífuga girando...')}}
+// Estufa
+{const g=equip('oven','Estufa','F liga/desliga (LED vermelho). Porta: F. Seca soluções a 120 °C.',-7.5,2.9),u=g.userData,pm=M(0xc9ced3,.5,.3);u.tog=1;
+bx(.02,.45,.5,pm,-.24,.225,0,g);bx(.5,.02,.5,pm,0,.44,0,g);bx(.5,.02,.5,pm,0,.01,0,g,true);bx(.5,.45,.02,pm,0,.225,.24,g);bx(.5,.45,.02,pm,0,.225,-.24,g);bx(.01,.03,.03,LED,.255,.42,-.2,g);
+const d=new T.Group();d.userData={kind:'door',n:'Porta da estufa',h:'F: abrir/fechar.',open:false,a:0,dir:1};d.position.set(-7.25,.9,2.65);bx(.02,.4,.46,new T.MeshStandardMaterial({color:0x223344,transparent:true,opacity:.5,roughness:.1}),0,.225,.23,d).castShadow=false;S.add(d);inter.push(d);mov.dr.push(d);
+HT.push(c=>{if(!u.on||d.userData.open||d.userData.a>.3)return 0;const p=c.position;if(Math.abs(p.x+7.5)<.2&&Math.abs(p.z-2.9)<.2&&p.y>.9&&p.y<1.35){EVF=4;return 120}return 0})}
+// Destilador
+{const g=equip('dist','Destilador','F liga a manta. O vapor condensa no recipiente coletor à direita (z+).',-7.5,-3.9),u=g.userData,gm2=M(0xaad4ee,.1,0,{transparent:true,opacity:.5});u.tog=1;
+cy(.1,.05,M(0x2a2f34,.8),0,.025,0,g);hid(g,0,.052,0,.09,.01,1);cy(.04,.004,M(0x4a90c2),0,.002,.8,g);cy(.008,.18,gm2,0,.14,0,g);const cd=cy(.02,.8,gm2,0,.3,.4,g);cd.rotation.x=Math.PI/2;cy(.008,.18,gm2,0,.2,.8,g);
+HT.push(c=>{if(!u.on||!near(c,-7.5,-3.9,.09,.952,.05))return 0;EVD=1;return 300})}
+// Microscópio
+function micOpen(c){if(VR){msg('Microscópio indisponível no modo VR');return}const s=c.userData.st,g=$('mc').getContext('2d'),k=col(s),sd=sedOf(s),bl=i=>(255-(255-k[i]*255)*k[3])|0;
+g.fillStyle=s.vol>.05?`rgb(${bl(0)},${bl(1)},${bl(2)})`:'#eef1f3';g.fillRect(0,0,320,320);g.fillStyle='#'+sd.c.toString(16).padStart(6,'0');g.strokeStyle='rgba(0,0,0,.35)';
+for(let i=0,n=Math.min(150,sd.g*60|0);i<n;i++){g.save();g.translate(Math.random()*320,Math.random()*320);g.rotate(Math.random()*6);const r=3+Math.random()*9;
+if(s.cpp>0&&sd.c==0x6aa8e8){g.beginPath();g.arc(0,0,r,0,7);g.arc(r*.8,r*.4,r*.7,0,7);g.fill()}else if(sd.c==0x3a7be0)g.fillRect(-r*2,-r*.4,r*4,r*.8);else{g.fillRect(-r,-r,r*2,r*2);g.strokeRect(-r,-r,r*2,r*2)}g.restore()}
+if(s.fizz>0){g.strokeStyle='#fff';for(let i=0;i<25;i++){g.beginPath();g.arc(Math.random()*320,Math.random()*320,3+Math.random()*10,0,7);g.stroke()}}
+$('mt').textContent=(sd.g>.02?'Sólidos: '+sd.g.toFixed(2)+' g · ':'Sem sólidos visíveis · ')+(s.vol>.05?'líquido '+s.vol.toFixed(0)+' mL':'sem líquido')+' · toque para fechar';F.mic=1;$('mic').style.display='flex';panel=true;note('Microscópio: observei '+c.userData.ty.n)}
+function micClose(){$('mic').style.display='none';panel=false}
+$('mic').onclick=micClose;addEventListener('keydown',e=>{if(e.code=='Escape'&&$('mic').style.display=='flex')micClose()});
+{const g=equip('mic','Microscópio','F: observar a amostra sobre a platina.',-7.5,1.5),dk=M(0x2d3338,.4,.5),lt=M(0xe6e6e6,.4,.4);
+bx(.14,.02,.2,dk,-.02,.01,0,g);bx(.03,.4,.03,lt,-.08,.2,0,g);bx(.12,.04,.04,lt,-.04,.4,0,g);cy(.06,.008,dk,0,.1,0,g);hid(g,0,.105,0,.06,.01,1);cy(.012,.18,dk,0,.31,0,g);
+g.userData.fn=()=>{const c=conts.find(c=>near(c,-7.5,1.5,.07,1.005,.06));c?micOpen(c):msg('Coloque um recipiente na platina.')}}
+// Bureta + suporte universal
+const BX_=-2.9,BZ_=-5.3,bh=u=>'Bureta: '+u.v.toFixed(1)+' mL de NaOH 0,1 mol/L. Segure F para pingar (0,5 mL)'+(u.v<=0?' — vazia: F reabastece':''),
+bv=u=>{const f=Math.max(.001,u.v/50)*.4;u.lq.scale.set(.0075,f,.0075);u.lq.position.y=.22+f/2};
+function burFn(u){const now=performance.now();if(now-u.t<110)return;u.t=now;if(u.v<=0){u.v=50;u.h=bh(u);bv(u);msg('Bureta reabastecida: NaOH 0,1 mol/L');return}
+const tg=conts.find(c=>near(c,BX_,BZ_,.05,.9,.05));if(!tg){msg('Posicione um recipiente sob a bureta.');return}
+const s=tg.userData.st;if(s.vol+.5>tg.userData.ty.cap)return;if(s.v0==null)s.v0=s.vol;u.v=Math.max(0,u.v-.5);s.burV=(s.burV||0)+.5;s.temp=(s.temp*s.vol+11)/(s.vol+.5);s.vol+=.5;STK[2].add(s,.5);react(s);u.h=bh(u);bv(u);
+const p=pH(s);if(s.ind&1&&s.hist.a&&p>8.3&&!s.titr){s.titr=1;F.titr=1;note('Titulação: viragem com '+s.burV.toFixed(1)+' mL de NaOH 0,1 mol/L; [ácido] ≈ '+(.1*s.burV/s.v0).toFixed(3)+' mol/L');msg('Ponto de viragem! '+s.burV.toFixed(1)+' mL',4000)}}
+{const g=equip('bur','Bureta com suporte universal','',BX_,BZ_),u=g.userData;u.v=50;u.t=0;
+bx(.14,.02,.1,ST_M,0,.01,-.14,g);cy(.006,.75,ST_M,0,.375,-.14,g);bx(.012,.012,.14,ST_M,0,.5,-.07,g);cy(.016,.02,ST_M,0,.5,0,g);
+cy(.01,.45,GLM,0,.425,0,g);cy(.003,.04,GLM,0,.2,0,g);bx(.03,.012,.012,M(0xffcc00),0,.24,0,g);
+u.lq=new T.Mesh(new T.CylinderGeometry(1,1,1,12),M(0x9bd0ff,.2,0,{transparent:true,opacity:.7}));g.add(u.lq);hid(g,0,.42,0,.03,.5);u.h=bh(u);bv(u);u.fn=u=>burFn(u)}
+mkCont('balao',-4.8,.9,-5.3);mkCont('pip',-4.4,.9,-5.3);mkCont('pip',-4.2,.9,-5.3);mkCont('erl',BX_,.9,BZ_);mkCont('bec2',-7.5,.9,-3.1);
 // ---- estado de jogo
 const keys={};let yaw=Math.PI,pitch=0,lock=false,rmb=false,started=false,pouring=false,panel=false,career=true,held=null,hd_=.6,tilt=0;
 const ppe={1:false,2:false,3:false};
@@ -196,15 +250,15 @@ function pick(){const a=aim();if(!a)return;const k=a.r.userData.kind;if(k!='cont
 function drop(){const rc2=new T.Raycaster(C.position,new T.Vector3(0,0,-1).applyQuaternion(C.quaternion),0,4);const hs=rc2.intersectObjects(surf);if(!hs.length||hs[0].face.normal.y<.5&&hs[0].object!==fl){msg('Mire para uma superfície para soltar.');return}
 const h=hs[0];held.userData.goal=new T.Vector3(h.point.x,h.point.y+.002,h.point.z);held=null;pouring=false}
 function use(){const a=aim();if(!a)return;const r=a.r,u=r.userData;
-if(u.kind=='door'){u.open=!u.open}
+if(held&&held.userData.ty&&held.userData.ty.k=='pip'&&u.kind=='cont'){const s=u.st,ps=held.userData.st,d=Math.min(1,s.vol,10-ps.vol);if(d<=.01){msg(s.vol<=.05?'Recipiente vazio':'Pipeta cheia')}else{xfer(s,ps,d);msg('Pipeta: '+ps.vol.toFixed(1)+' mL (clique: dispensar)')}}else if(u.kind=='door'){u.open=!u.open}
 else if(u.kind=='hood'){u.open=!u.open;u.fan=u.open;msg(u.open?'Janela aberta, exaustor ligado':'Janela fechada')}
-else if(u.kind=='equip'){if(u.id=='hot'||u.id=='stir'){u.on=!u.on;msg(u.n+(u.on?' ligada':' desligada'))}else msg(u.h)}
+else if(u.kind=='equip'){if(u.id=='hot'||u.id=='stir'||u.tog){u.on=!u.on;msg(u.n+(u.on?' ligado(a)':' desligado(a)'))}else if(u.fn)u.fn(u);else msg(u.h)}
 else if(u.kind=='faucet'){if(held&&held.userData.kind=='cont'){const s=held.userData.st,t=held.userData.ty,d=Math.min(25,t.cap-s.vol);if(d<=0){msg('Recipiente cheio');return}s.temp=(s.temp*s.vol+20*d)/(s.vol+d);s.vol+=d;s.wat+=d;msg('+25 mL de água da torneira')}else msg('Segure um recipiente para encher.')}
 else if(u.kind=='pc')togglePanel();else msg(u.h||u.n)}
 function measure(kind){const a=aim();if(!a||a.r.userData.kind!='cont'){msg('Mire para um recipiente.');return}const s=a.r.userData.st;
 if(kind=='p'){const p=pH(s);if(p==null){msg('Sem líquido para medir.');return}F.ph=1;EQ.ph.userData.sc.draw('pH '+p.toFixed(2));msg('pH = '+p.toFixed(2)+' (pHmetro)',3000);note('pH medido: '+p.toFixed(2)+' ('+a.r.userData.ty.n+')')}
 else{msg('Temperatura: '+s.temp.toFixed(1)+' °C',3000);note('T medida: '+s.temp.toFixed(1)+' °C')}}
-function xfer(src,dst,dv){const f=dv/src.vol;for(const k of NUM){const m=src[k]*f;src[k]-=m;dst[k]+=m}dst.temp=(dst.temp*(dst.vol-dv)+src.temp*dv)/dst.vol;dst.ind|=src.ind;Object.assign(dst.hist,src.hist);react(dst)}
+function xfer(src,dst,dv){const f=dv/src.vol;if(src.sep&&src.cpp>0)F.dec=1;dst.sep=0;for(const k of NUM){if(src.sep&&k=='cpp')continue;const m=src[k]*f;src[k]-=m;dst[k]+=m}dst.temp=(dst.temp*(dst.vol-dv)+src.temp*dv)/dst.vol;dst.ind|=src.ind;Object.assign(dst.hist,src.hist);react(dst)}
 function doPour(dt){const u=held.userData,bottle=u.kind=='bottle';
 if(bottle&&u.sp.haz&&!ppeOk()){pouring=false;return}
 const src=bottle?null:u.st;if(src&&src.vol<=.01){stream.visible=false;return}
@@ -229,7 +283,12 @@ const MS=[{t:'Medir 50 mL de água destilada em uma proveta',f:()=>conts.some(c=
 {t:'Gerar CO₂: bicarbonato + ácido acético',f:()=>F.gas},
 {t:'Obter solução rosa com fenolftaleína (base)',f:()=>conts.some(c=>{const s=c.userData.st,p=pH(s);return s.ind&1&&p>8.3})},
 {t:'Formar precipitado de Cu(OH)₂',f:()=>conts.some(c=>c.userData.st.cpp>0)},
-{t:'Aquecer uma solução a 60 °C na chapa',f:()=>conts.some(c=>c.userData.st.vol>10&&c.userData.st.temp>=60)}];
+{t:'Aquecer uma solução a 60 °C na chapa',f:()=>conts.some(c=>c.userData.st.vol>10&&c.userData.st.temp>=60)},
+{t:'Titular HCl com NaOH da bureta (viragem da fenolftaleína)',f:()=>F.titr},
+{t:'Observar uma amostra no microscópio',f:()=>F.mic},
+{t:'Centrifugar um precipitado e decantar o líquido',f:()=>F.dec},
+{t:'Destilar: recolher destilado no coletor',f:()=>F.dist},
+{t:'Secar uma solução na estufa até cristalizar',f:()=>F.dry}];
 function mlist(){$('mlist').innerHTML=career?MS.map(m=>`<li class="${m.d?'ok':''}">${m.d?'✔':'○'} ${m.t}</li>`).join(''):'<li>Modo livre: sem objetivos. Experimente à vontade!</li>';
 const n=MS.find(m=>!m.d);$('mis').innerHTML=career?(n?'🎯 '+n.t:'🏆 Todas as missões concluídas!'):'Modo livre';}
 function togglePanel(){if(VR&&!panel){msg('Caderno indisponível no modo VR');return}panel=!panel;$('pn').style.display=panel?'flex':'none';if(panel){try{document.exitPointerLock()}catch(e){}mlist()}else $('nb').blur()}
@@ -257,12 +316,12 @@ return`<b>${t.n}</b> — ${s.vol.toFixed(1)} / ${t.cap} mL<br>${L||'Vazio'}${sd.
 return`<b>${u.n||'Objeto'}</b><br><i>${u.h||''}</i>`}
 // loop
 const clk=new T.Clock();let bacc=0,lastInfo='',balT=0;
-function loop(){requestAnimationFrame(loop);const dt=Math.min(.05,clk.getDelta());pads(dt);
+function loop(){requestAnimationFrame(loop);const dt=Math.min(.05,clk.getDelta());pads(dt);perf(dt);
 if(started&&!panel){const sp=(keys.ShiftLeft?3.6:2.1)*dt,fx=-Math.sin(yaw+hy),fz=-Math.cos(yaw+hy);let mx=0,mz=0;
 if(keys.KeyW){mx+=fx;mz+=fz}if(keys.KeyS){mx-=fx;mz-=fz}if(keys.KeyA){mx+=fz;mz-=fx}if(keys.KeyD){mx-=fz;mz+=fx}
-const l=Math.hypot(mx,mz)||1;mx=mx/l*sp;mz=mz/l*sp;if(!blocked(C.position.x+mx,C.position.z))C.position.x+=mx;if(!blocked(C.position.x,C.position.z+mz))C.position.z+=mz;
+const l=Math.hypot(mx,mz)||1,kk=Math.min(1,dt*9);mvx+=(mx/l*sp-mvx)*kk;mvz+=(mz/l*sp-mvz)*kk;mx=mvx;mz=mvz;if(!blocked(C.position.x+mx,C.position.z))C.position.x+=mx;if(!blocked(C.position.x,C.position.z+mz))C.position.z+=mz;
 if(keys.ArrowLeft)yaw+=dt*1.8;if(keys.ArrowRight)yaw-=dt*1.8;if(keys.ArrowUp)pitch=Math.min(1.4,pitch+dt*1.4);if(keys.ArrowDown)pitch=Math.max(-1.4,pitch-dt*1.4)}
-C.rotation.set(Math.max(-1.5,Math.min(1.5,pitch+hp)),yaw+hy,hr);C.updateMatrixWorld();
+C.position.y=VR?1.65:1.65+Math.sin(bob+=Math.hypot(mvx,mvz)*6)*.011*Math.min(1,Math.hypot(mvx,mvz)*30);C.rotation.set(Math.max(-1.5,Math.min(1.5,pitch+hp)),yaw+hy,hr);C.updateMatrixWorld();
 // segurar
 const want=held&&pouring&&!panel?1.35:0;tilt+=(want-tilt)*Math.min(1,dt*6);
 if(held){const f=new T.Vector3(0,0,-1).applyQuaternion(C.quaternion),rt=new T.Vector3(1,0,0).applyQuaternion(C.quaternion),up=new T.Vector3(0,1,0).applyQuaternion(C.quaternion);
@@ -277,13 +336,18 @@ const hot=EQ.hot,st=EQ.stir;hot.userData.top.material.emissive.setHex(hot.userDa
 for(const c of conts){if(c===held&&0)continue;const u=c.userData,s=u.st;c.updateMatrixWorld();
 const onT=(e,r)=>!u.goal&&c!==held&&Math.hypot(c.position.x-e.position.x,c.position.z-e.position.z)<r&&Math.abs(c.position.y-(.9+.07))<.05;
 const onH=onT(hot,.15),onS=onT(st,.14);
-const heat=onH&&hot.userData.on&&s.vol>0?(250-s.temp)*.07:0;s.temp+=(heat+(22-s.temp)*.004)*dt/(s.vol/60+.3);if(s.temp>100)s.temp=100;
-if(s.temp>=99.5&&s.vol>0&&s.wat>0){const e=.5*dt;const f=e/s.vol;s.vol-=e;s.wat=Math.max(0,s.wat-e)}
+EVF=1;EVD=0;let heat=onH&&hot.userData.on&&s.vol>0?(250-s.temp)*.07:0;for(const h of HT){const tg=h(c);if(tg&&s.vol>0)heat+=(tg-s.temp)*.07}s.temp+=(heat+(22-s.temp)*.004)*dt/(s.vol/60+.3);if(s.temp>100)s.temp=100;
+if(EVD&&s.vol>0){const k=s.et>0&&s.temp>=78?'et':(s.temp>=99.5&&s.wat>0?'wat':null);if(k){const e=Math.min(1.5*dt,s[k]),cc=conts.find(x=>near(x,-7.5,-3.1,.07,.9,.04));s[k]-=e;s.vol-=e;if(cc){const cs=cc.userData.st;if(cs.vol+e<=cc.userData.ty.cap){cs[k]+=e;cs.vol+=e;cs.temp=30;F.dist=1}}}}
+else if(s.temp>=99.5&&s.vol>0&&s.wat>0){const e=Math.min(.5*EVF*dt,s.wat);s.vol-=e;s.wat-=e}
+if(EVF>1&&s.vol<=.05&&u.dp)F.dry=1;u.dp=s.vol>.05;if(s.vol<0)s.vol=0;
 if(u.bar){u.bar.visible=s.vol>.5;u.bar.position.y=.008;if(onS&&st.userData.on){u.bar.rotation.y+=dt*30;u.lq.rotation.y+=dt*6}}
 if(s.fizz>0){s.fizz=Math.max(0,s.fizz-dt);bacc+=0;if(Math.random()<.9)emit(c,0);if(Math.random()<.5)emit(c,0)}
 if(s.temp>=85&&s.vol>1&&Math.random()<(s.temp-80)/40)emit(c,0);if(s.temp>55&&s.vol>1&&Math.random()<.25)emit(c,1);
 if(onT(EQ.bal,.12)&&1)EQ.bal.userData.m=u.ty.tare+s.vol+sedOf(s).g;
 viz(c)}
+{const bo=EQ.bun.userData.on;BUN.f.visible=bo;BUN.l.intensity=bo?1.1+Math.random()*.5:0;if(bo)BUN.f.scale.y=.9+Math.random()*.3;
+const ce=EQ.cen.userData;if(ce.t>0){ce.t-=dt;ROT.rotation.y+=dt*30;if(ce.t<=0){let n=0;for(const c of conts)if(near(c,-7.5,-1.6,.13,1.03,.06)){c.userData.st.sep=1;n++}if(n)F.cent=1;msg(n?'Centrifugação concluída: precipitado compactado. Decante com cuidado.':'Centrífuga vazia: coloque tubos sobre o rotor.',4000)}}
+LED.color.setHex(EQ.oven.userData.on?0xff2020:0x330808)}
 balT+=dt;if(balT>.2){balT=0;let m=null;for(const c of conts){const e=EQ.bal;if(c!==held&&!c.userData.goal&&Math.hypot(c.position.x-e.position.x,c.position.z-e.position.z)<.1&&Math.abs(c.position.y-.955)<.05){const s=c.userData.st;m=c.userData.ty.tare+s.vol+sedOf(s).g}}EQ.bal.userData.sc.draw((m==null?0:m).toFixed(1)+' g')}
 for(const b of bub)if(b.visible){const u=b.userData;u.l-=dt;if(u.l<=0){b.visible=false;continue}const k=u.l/u.m;b.position.y+=dt*(u.s?.12:.12);
 if(u.s){b.scale.setScalar(.01+(1-k)*.03);b.material.opacity=.3*k}else{b.scale.setScalar(.005);b.material.opacity=.7}}
@@ -316,7 +380,7 @@ const tr=g.buttons[7]?g.buttons[7].value:0;if(tr>.3){padP=true;pouring=true}else
 if(bt(4))hd_=Math.max(.3,hd_-dt*.6);if(bt(5))hd_=Math.min(1.2,hd_+dt*.6);
 const map={0:'KeyE',2:'KeyF',3:'KeyP',1:'KeyT',12:'Digit1',14:'Digit2',15:'Digit3',9:'RC',8:'EX'};
 for(const b in map){const p=bt(b);if(p&&!pb_[b]){if(map[b]=='RC')hy0=null;else if(map[b]=='EX'){VR?exitVR():enterVR()}else kdp(map[b])}pb_[b]=p}}
-const TOUCH='ontouchstart' in window||navigator.maxTouchPoints>0;
+const TOUCH='ontouchstart' in window||navigator.maxTouchPoints>0;if(TOUCH)SPT.forEach(s=>s.castShadow=false);
 if(TOUCH){document.body.classList.add('touch');
 $('go').addEventListener('click',()=>$('tc').style.display='block');
 const kd=c=>{dispatchEvent(new KeyboardEvent('keydown',{code:c}));dispatchEvent(new KeyboardEvent('keyup',{code:c}))};
